@@ -1,4 +1,4 @@
-# Retro Game E-Commerce Store
+# Bengals Roster API
 
 ![Alt Text](https://giphy.com/nfl/teams/cincinnati-bengals)
 
