@@ -1,6 +1,6 @@
 # Bengals Roster API
 
-![Bengals](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExa24yeGlnYTM4NzRndzUzNzM2N2E1dGEyZDNxZDlpZnN1anc0cmhqdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wyIHIGiuwArMc5uxqH/giphy.gif)
+![Bengals](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDRzZ2p0Z2c5eWRkamRraXdoNG1kbWE5ZmppZHA5b3pqOTh5eWludSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/EgfCSAPCOr5VZ6SZX3/giphy.gif)
 
 ## Setup
 
