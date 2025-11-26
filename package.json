@@ -1,0 +1,19 @@
+{
+  "name": "bengals-roster-api",
+  "version": "1.0.0",
+  "description": "REST API for the 2024 Cincinnati Bengals roster",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "Justin Linville",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

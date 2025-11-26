@@ -1,0 +1,101 @@
+[
+	{
+		"name": "Ja'Marr Chase",
+		"number": 1,
+		"position": "WR",
+		"age": 25,
+		"height": "6-0",
+		"weight": 205,
+		"college": "LSU"
+	},
+	{
+		"name": "Orlando Brown",
+		"number": 75,
+		"position": "OT",
+		"age": 29,
+		"height": "6-8",
+		"weight": 350,
+		"college": "Oklahoma"
+	},
+	{
+		"name": "Dylan Fairchild",
+		"number": 63,
+		"position": "G",
+		"age": 22,
+		"height": "6-5",
+		"weight": 318,
+		"college": "Georgia"
+	},
+	{
+		"name": "Ted Karras",
+		"number": 64,
+		"position": "C",
+		"age": 32,
+		"height": "6-4",
+		"weight": 310,
+		"college": "Illinois"
+	},
+	{
+		"name": "Jalen Rivers",
+		"number": 74,
+		"position": "G",
+		"age": 23,
+		"height": "6-5",
+		"weight": 319,
+		"college": "Miami"
+	},
+	{
+		"name": "Amarius Mims",
+		"number": 71,
+		"position": "OT",
+		"age": 23,
+		"height": "6-8",
+		"weight": 350,
+		"college": "Georgia"
+	},
+	{
+		"name": "Mike Gesicki",
+		"number": 88,
+		"position": "TE",
+		"age": 30,
+		"height": "6-6",
+		"weight": 245,
+		"college": "Penn State"
+	},
+	{
+		"name": "Andrei Iosivas",
+		"number": 80,
+		"position": "WR",
+		"age": 26,
+		"height": "6-3",
+		"weight": 210,
+		"college": "Princeton"
+	},
+	{
+		"name": "Tee Higgins",
+		"number": 5,
+		"position": "WR",
+		"age": 26,
+		"height": "6-4",
+		"weight": 220,
+		"college": "Clemson"
+	},
+	{
+		"name": "Joe Burrow",
+		"number": 9,
+		"position": "QB",
+		"age": 28,
+		"height": "6-4",
+		"weight": 215,
+		"college": "LSU"
+	},
+	{
+		"name": "Chase Brown",
+		"number": 30,
+		"position": "HB",
+		"age": 25,
+		"height": "5-10",
+		"weight": 210,
+		"college": "Illinois"
+	}
+]
