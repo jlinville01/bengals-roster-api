@@ -1,6 +1,6 @@
 # Bengals Roster API
 
-![Alt Text](https://tenor.com/view/cincinnati-bengals-gif-23951309)
+![Alt Text](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExa24yeGlnYTM4NzRndzUzNzM2N2E1dGEyZDNxZDlpZnN1anc0cmhqdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wyIHIGiuwArMc5uxqH/giphy.gif)
 
 ## Setup
 
