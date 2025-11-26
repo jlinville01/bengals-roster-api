@@ -1,6 +1,6 @@
 # Bengals Roster API
 
-![https://giphy.com/nfl/teams/cincinnati-bengals](https://media0.giphy.com/media/6o5jbP93YC34c/giphy.gif)
+![Alt Text](https://media0.giphy.com/media/6o5jbP93YC34c/giphy.gif)
 
 ## Setup
 
