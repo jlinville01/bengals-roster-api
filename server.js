@@ -15,13 +15,24 @@ app.use(express.json());
 let players = [];
 let nextId = 1;
 
-// Load players from test-data.json and assign internal IDs
+// Some basic allowed positions (you can expand this if you like)
+const VALID_POSITIONS = new Set([
+  'QB', 'RB', 'HB', 'FB',
+  'WR', 'TE',
+  'OT', 'OG', 'OC', 'OL',
+  'DE', 'DT', 'DL',
+  'LB', 'ILB', 'OLB',
+  'CB', 'S', 'FS', 'SS',
+  'K', 'P', 'LS'
+]);
+
+// ---------- Data loading / saving ----------
+
 function loadPlayersFromFile() {
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
     const data = JSON.parse(raw);
 
-    // Add an internal numeric "id" to each player
     players = data.map((p, index) => ({
       id: index + 1,
       ...p,
@@ -39,8 +50,12 @@ function loadPlayersFromFile() {
   }
 }
 
-// Save players back to test-data.json (without "id" field)
 function savePlayersToFile() {
+  // Don’t write to disk when running tests
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
   try {
     const dataToSave = players.map(({ id, ...rest }) => rest);
     fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2));
@@ -50,31 +65,229 @@ function savePlayersToFile() {
   }
 }
 
+
 // Initial load
 loadPlayersFromFile();
 
+// ---------- Validation helpers ----------
+
+function parseNumberField(fieldName, value, errors) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    errors.push(`${fieldName} must be a valid number`);
+    return null;
+  }
+  if (!Number.isInteger(num) || num <= 0) {
+    errors.push(`${fieldName} must be a positive integer`);
+    return null;
+  }
+  return num;
+}
+
 /**
- * ROUTES
+ * Validate player payload.
+ * - If requireAllFields = true → all fields must be present and valid.
+ * - If requireAllFields = false → only validate fields that are present (for partial updates).
  *
+ * Returns: { errors: string[], player: object }
+ */
+function validatePlayerPayload(body, { requireAllFields = true } = {}) {
+  const errors = [];
+  const player = {};
+
+  // name
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'name')) {
+    if (typeof body.name !== 'string' || !body.name.trim()) {
+      errors.push('name is required and must be a non-empty string');
+    } else {
+      player.name = body.name.trim();
+    }
+  }
+
+  // number
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'number')) {
+    if (body.number === undefined || body.number === null) {
+      errors.push('number is required');
+    } else {
+      const n = parseNumberField('number', body.number, errors);
+      if (n !== null) player.number = n;
+    }
+  }
+
+  // position
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'position')) {
+    if (typeof body.position !== 'string' || !body.position.trim()) {
+      errors.push('position is required and must be a non-empty string');
+    } else {
+      const posUpper = body.position.trim().toUpperCase();
+      if (!VALID_POSITIONS.has(posUpper)) {
+        errors.push(
+          `position must be one of: ${Array.from(VALID_POSITIONS).join(', ')}`
+        );
+      } else {
+        player.position = posUpper;
+      }
+    }
+  }
+
+  // age
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'age')) {
+    if (body.age === undefined || body.age === null) {
+      errors.push('age is required');
+    } else {
+      const a = parseNumberField('age', body.age, errors);
+      if (a !== null) player.age = a;
+    }
+  }
+
+  // height
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'height')) {
+    if (typeof body.height !== 'string' || !body.height.trim()) {
+      errors.push('height is required and must be a non-empty string');
+    } else {
+      // Light validation: e.g., "6-4", "5-11"
+      const h = body.height.trim();
+      const heightPattern = /^\d+-\d+$/;
+      if (!heightPattern.test(h)) {
+        errors.push('height must be in the format "feet-inches" (e.g., "6-4")');
+      } else {
+        player.height = h;
+      }
+    }
+  }
+
+  // weight
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'weight')) {
+    if (body.weight === undefined || body.weight === null) {
+      errors.push('weight is required');
+    } else {
+      const w = parseNumberField('weight', body.weight, errors);
+      if (w !== null) player.weight = w;
+    }
+  }
+
+  // college
+  if (requireAllFields || Object.prototype.hasOwnProperty.call(body, 'college')) {
+    if (typeof body.college !== 'string' || !body.college.trim()) {
+      errors.push('college is required and must be a non-empty string');
+    } else {
+      player.college = body.college.trim();
+    }
+  }
+
+  return { errors, player };
+}
+
+// ---------- ROUTES ----------
+
+/**
  * Base URL: http://localhost:3000
  *
- * GET    /players          -> all players
- * GET    /players/:id      -> single player by id
- * POST   /players          -> add new player
- * PUT    /players/:id      -> update existing player by id
- * DELETE /players/:id      -> delete player by id
+ * GET    /players              -> all players (with optional filters)
+ * GET    /players/:id          -> single player by id
+ * POST   /players              -> add new player
+ * PUT    /players/:id          -> update existing player by id
+ * DELETE /players/:id          -> delete player by id
  *
- * POST   /admin/refresh    -> reload from test-data.json (optional helper)
+ * POST   /admin/refresh        -> reload from test-data.json
  */
 
-// GET all players
+// GET all players, with filters:
+//   /players
+//   /players?position=WR
+//   /players?name=burrow
+//   /players?number=9
+//   /players?college=lsu
+//   /players?minAge=25&maxAge=30
+//   /players?minWeight=200&maxWeight=230
 app.get('/players', (req, res) => {
-  res.json(players);
+  let result = [...players];
+  const {
+    position,
+    number,
+    name,
+    college,
+    minAge,
+    maxAge,
+    minWeight,
+    maxWeight,
+  } = req.query;
+
+  // position filter (case-insensitive)
+  if (position) {
+    const posUpper = String(position).toUpperCase();
+    result = result.filter((p) => p.position.toUpperCase() === posUpper);
+  }
+
+  // number filter
+  if (number !== undefined) {
+    const n = Number(number);
+    if (!Number.isFinite(n)) {
+      return res.status(400).json({ error: 'number filter must be numeric' });
+    }
+    result = result.filter((p) => p.number === n);
+  }
+
+  // name substring filter (case-insensitive)
+  if (name) {
+    const nameLower = String(name).toLowerCase();
+    result = result.filter((p) =>
+      p.name.toLowerCase().includes(nameLower)
+    );
+  }
+
+  // college substring filter (case-insensitive)
+  if (college) {
+    const collegeLower = String(college).toLowerCase();
+    result = result.filter((p) =>
+      p.college.toLowerCase().includes(collegeLower)
+    );
+  }
+
+  // age range filters
+  if (minAge !== undefined) {
+    const min = Number(minAge);
+    if (!Number.isFinite(min)) {
+      return res.status(400).json({ error: 'minAge filter must be numeric' });
+    }
+    result = result.filter((p) => p.age >= min);
+  }
+
+  if (maxAge !== undefined) {
+    const max = Number(maxAge);
+    if (!Number.isFinite(max)) {
+      return res.status(400).json({ error: 'maxAge filter must be numeric' });
+    }
+    result = result.filter((p) => p.age <= max);
+  }
+
+  // weight range filters
+  if (minWeight !== undefined) {
+    const minW = Number(minWeight);
+    if (!Number.isFinite(minW)) {
+      return res.status(400).json({ error: 'minWeight filter must be numeric' });
+    }
+    result = result.filter((p) => p.weight >= minW);
+  }
+
+  if (maxWeight !== undefined) {
+    const maxW = Number(maxWeight);
+    if (!Number.isFinite(maxW)) {
+      return res.status(400).json({ error: 'maxWeight filter must be numeric' });
+    }
+    result = result.filter((p) => p.weight <= maxW);
+  }
+
+  res.json(result);
 });
 
 // GET single player by id
 app.get('/players/:id', (req, res) => {
   const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'id must be a positive integer' });
+  }
+
   const player = players.find((p) => p.id === id);
 
   if (!player) {
@@ -87,32 +300,17 @@ app.get('/players/:id', (req, res) => {
 // POST new player
 // Requires: name, number, position, age, height, weight, college
 app.post('/players', (req, res) => {
-  const { name, number, position, age, height, weight, college } = req.body;
+  const { errors, player } = validatePlayerPayload(req.body, {
+    requireAllFields: true,
+  });
 
-  if (
-    !name ||
-    number === undefined ||
-    !position ||
-    age === undefined ||
-    !height ||
-    weight === undefined ||
-    !college
-  ) {
-    return res.status(400).json({
-      error:
-        'Missing required fields: name, number, position, age, height, weight, college',
-    });
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
   }
 
   const newPlayer = {
     id: nextId++,
-    name,
-    number,
-    position,
-    age,
-    height,
-    weight,
-    college,
+    ...player,
   };
 
   players.push(newPlayer);
@@ -125,23 +323,37 @@ app.post('/players', (req, res) => {
 // Requires: id param; body can include any of the player fields to update
 app.put('/players/:id', (req, res) => {
   const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'id must be a positive integer' });
+  }
+
   const index = players.findIndex((p) => p.id === id);
 
   if (index === -1) {
     return res.status(404).json({ error: 'Player not found' });
   }
 
-  const { name, number, position, age, height, weight, college } = req.body;
+  // If no fields provided, bail out early
+  const hasUpdatableField = ['name', 'number', 'position', 'age', 'height', 'weight', 'college']
+    .some((field) => Object.prototype.hasOwnProperty.call(req.body, field));
+
+  if (!hasUpdatableField) {
+    return res.status(400).json({
+      error: 'At least one of name, number, position, age, height, weight, college must be provided',
+    });
+  }
+
+  const { errors, player } = validatePlayerPayload(req.body, {
+    requireAllFields: false,
+  });
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
 
   const updatedPlayer = {
     ...players[index],
-    ...(name !== undefined && { name }),
-    ...(number !== undefined && { number }),
-    ...(position !== undefined && { position }),
-    ...(age !== undefined && { age }),
-    ...(height !== undefined && { height }),
-    ...(weight !== undefined && { weight }),
-    ...(college !== undefined && { college }),
+    ...player,
   };
 
   players[index] = updatedPlayer;
@@ -153,6 +365,10 @@ app.put('/players/:id', (req, res) => {
 // DELETE player by id
 app.delete('/players/:id', (req, res) => {
   const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'id must be a positive integer' });
+  }
+
   const index = players.findIndex((p) => p.id === id);
 
   if (index === -1) {
