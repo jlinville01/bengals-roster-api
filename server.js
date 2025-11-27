@@ -177,6 +177,12 @@ app.post('/admin/refresh', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Bengals roster API running at http://localhost:${PORT}`);
-});
+// Only start listening if this file is run directly (npm start)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Bengals roster API running at http://localhost:${PORT}`);
+  });
+}
+
+// For tests: export the Express app (NOT app.listen(...))
+module.exports = app;
