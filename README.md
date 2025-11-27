@@ -28,19 +28,9 @@
    ```
    - The app will be available at `http://localhost:3000`
    
-4. **Change directories**
+4. **Run automation**
    ```bash
-   cd qa
-   ```
-
-5. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-6. **Run automation**
-   ```bash
-   npx wdio run ./wdio.conf.js
+   npm test
    ```
 
 ### Refresh Data
