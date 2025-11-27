@@ -35,9 +35,7 @@
 
 ### Refresh Data
 1. **Start the server again**
-   ```bash
-   npm run dev
-   ```
+
 OR
 
 2. **Use the /admin/refresh endpoint (no restart)**
